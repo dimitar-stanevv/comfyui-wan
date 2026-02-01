@@ -224,7 +224,7 @@ if [ $download_count -gt 0 ]; then
     # Rename any .zip files to .safetensors (CivitAI quirk)
     echo "Renaming any zip files to safetensors..."
     cd $LORAS_DIR
-    for file in *.zip 2>/dev/null; do
+    for file in *.zip; do
         [ -f "$file" ] && mv "$file" "${file%.zip}.safetensors"
     done
 
