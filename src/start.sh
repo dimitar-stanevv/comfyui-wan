@@ -373,6 +373,18 @@ done
 
 if curl --silent --fail "$URL" --output /dev/null; then
     echo "🚀 ComfyUI is UP!"
+    
+    # Send push notification via ntfy.sh (free, no account needed)
+    # Set NTFY_TOPIC env variable in your vast.ai template to receive notifications
+    if [ -n "$NTFY_TOPIC" ]; then
+        curl -s \
+            -H "Title: ComfyUI Ready 🚀" \
+            -H "Priority: high" \
+            -H "Tags: white_check_mark,rocket" \
+            -d "ComfyUI is UP and ready to use!" \
+            "https://ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1
+        echo "📱 Notification sent to ntfy.sh topic"
+    fi
 fi
 
 sleep infinity
