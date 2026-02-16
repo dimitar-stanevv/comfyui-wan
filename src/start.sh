@@ -29,6 +29,24 @@ else
     echo "curl is already installed"
 fi
 
+# ============================================================
+# Notification Helper Function (ntfy.sh)
+# ============================================================
+# Set NTFY_TOPIC env variable in your vast.ai template to receive notifications
+send_ntfy() {
+    local title="$1"
+    local message="$2"
+    local priority="${3:-default}"
+    
+    if [ -n "$NTFY_TOPIC" ]; then
+        curl -s \
+            -H "Title: $title" \
+            -H "Priority: $priority" \
+            -d "$message" \
+            "https://ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1
+    fi
+}
+
 # Start SageAttention build in the background (needed for PathchSageAttentionKJ node)
 echo "Starting SageAttention build..."
 (
@@ -123,9 +141,11 @@ mkdir -p "$TEXT_ENCODERS_DIR"
 mkdir -p "$VAE_DIR"
 
 # Function to download a model using aria2c
+# Usage: download_model <url> <full_path> [notification_name]
 download_model() {
     local url="$1"
     local full_path="$2"
+    local notify_name="${3:-}"
 
     local destination_dir=$(dirname "$full_path")
     local destination_file=$(basename "$full_path")
@@ -153,6 +173,11 @@ download_model() {
         rm -f "$full_path"
     fi
 
+    # Send notification if name provided
+    if [ -n "$notify_name" ]; then
+        send_ntfy "📥 Download Started" "$notify_name download started"
+    fi
+
     echo "📥 Downloading $destination_file to $destination_dir..."
     aria2c -x 16 -s 16 -k 1M --continue=true -d "$destination_dir" -o "$destination_file" "$url" &
     echo "Download started in background for $destination_file"
@@ -160,16 +185,16 @@ download_model() {
 
 # Download Wan 2.2 I2V models (high noise + low noise)
 echo "📥 Downloading Wan 2.2 I2V diffusion models..."
-download_model "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors" "$DIFFUSION_MODELS_DIR/wan2.2_i2v_high_noise_14B_fp16.safetensors"
-download_model "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors" "$DIFFUSION_MODELS_DIR/wan2.2_i2v_low_noise_14B_fp16.safetensors"
+download_model "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors" "$DIFFUSION_MODELS_DIR/wan2.2_i2v_high_noise_14B_fp16.safetensors" "Wan 2.2 High Noise (28GB)"
+download_model "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors" "$DIFFUSION_MODELS_DIR/wan2.2_i2v_low_noise_14B_fp16.safetensors" "Wan 2.2 Low Noise (28GB)"
 
 # Download text encoder
 echo "📥 Downloading text encoder..."
-download_model "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "$TEXT_ENCODERS_DIR/umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+download_model "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "$TEXT_ENCODERS_DIR/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "Text Encoder (5GB)"
 
 # Download VAE
 echo "📥 Downloading VAE..."
-download_model "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors" "$VAE_DIR/wan_2.1_vae.safetensors"
+download_model "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors" "$VAE_DIR/wan_2.1_vae.safetensors" "VAE (300MB)"
 
 # Wait for all aria2c downloads to complete
 echo "⏳ Waiting for model downloads to complete..."
@@ -202,6 +227,10 @@ for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
     fi
 
     IFS=',' read -ra MODEL_IDS <<< "$MODEL_IDS_STRING"
+    
+    # Send one notification when LoRA downloads start
+    lora_count=${#MODEL_IDS[@]}
+    send_ntfy "📥 LoRA Downloads Starting" "Downloading $lora_count LoRA(s) from CivitAI"
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
         sleep 1
@@ -373,18 +402,8 @@ done
 
 if curl --silent --fail "$URL" --output /dev/null; then
     echo "🚀 ComfyUI is UP!"
-    
-    # Send push notification via ntfy.sh (free, no account needed)
-    # Set NTFY_TOPIC env variable in your vast.ai template to receive notifications
-    if [ -n "$NTFY_TOPIC" ]; then
-        curl -s \
-            -H "Title: ComfyUI Ready 🚀" \
-            -H "Priority: high" \
-            -H "Tags: white_check_mark,rocket" \
-            -d "ComfyUI is UP and ready to use!" \
-            "https://ntfy.sh/$NTFY_TOPIC" > /dev/null 2>&1
-        echo "📱 Notification sent to ntfy.sh topic"
-    fi
+    send_ntfy "🚀 ComfyUI Ready!" "ComfyUI is UP and ready to use!" "high"
+    [ -n "$NTFY_TOPIC" ] && echo "📱 Notification sent to ntfy.sh topic"
 fi
 
 sleep infinity
