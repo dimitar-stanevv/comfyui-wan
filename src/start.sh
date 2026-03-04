@@ -215,6 +215,7 @@ declare -A MODEL_CATEGORIES=(
 )
 
 download_count=0
+failed_downloads=()
 
 for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
     mkdir -p "$TARGET_DIR"
@@ -233,31 +234,67 @@ for TARGET_DIR in "${!MODEL_CATEGORIES[@]}"; do
     send_ntfy "📥 LoRA Downloads Starting" "Downloading $lora_count LoRA(s) from CivitAI"
 
     for MODEL_ID in "${MODEL_IDS[@]}"; do
-        sleep 1
+        MODEL_ID=$(echo "$MODEL_ID" | xargs)  # trim whitespace
         echo "🚀 Downloading LoRA from CivitAI: $MODEL_ID to $TARGET_DIR"
-        (cd "$TARGET_DIR" && download_with_aria.py -m "$MODEL_ID") &
+
+        # Each download gets its own temp directory to prevent filename collisions
+        # (multiple downloads without Content-Disposition all fall back to "download.bin")
+        TEMP_DIR="$TARGET_DIR/.tmp_civitai_${MODEL_ID}"
+        mkdir -p "$TEMP_DIR"
+
+        download_success=false
+        for attempt in 1 2; do
+            if [ $attempt -gt 1 ]; then
+                echo "🔄 Retry attempt $attempt for model $MODEL_ID..."
+                rm -f "$TEMP_DIR"/*
+                sleep 3
+            fi
+
+            if (cd "$TEMP_DIR" && download_with_aria.py -m "$MODEL_ID"); then
+                download_success=true
+                break
+            fi
+        done
+
+        if $download_success; then
+            # Move downloaded file(s) from temp dir to target dir
+            for f in "$TEMP_DIR"/*; do
+                [ -f "$f" ] || continue
+                fname=$(basename "$f")
+                # Rename generic fallback filenames to include the model ID
+                if [ "$fname" = "download.bin" ]; then
+                    fname="civitai_${MODEL_ID}.safetensors"
+                    echo "📝 Renamed download.bin → $fname"
+                fi
+                mv "$f" "$TARGET_DIR/$fname"
+                echo "✅ Downloaded: $fname"
+            done
+        else
+            echo "❌ Failed to download model $MODEL_ID after 2 attempts"
+            failed_downloads+=("$MODEL_ID")
+        fi
+
+        # Clean up temp directory
+        rm -rf "$TEMP_DIR"
         ((download_count++))
     done
 done
 
 if [ $download_count -gt 0 ]; then
-    echo "📋 Scheduled $download_count CivitAI downloads in background"
-
-    # Wait for CivitAI downloads to complete
-    echo "⏳ Waiting for CivitAI downloads to complete..."
-    while pgrep -x "aria2c" > /dev/null; do
-        echo "🔽 LoRA downloads still in progress..."
-        sleep 5
-    done
-
     # Rename any .zip files to .safetensors (CivitAI quirk)
     echo "Renaming any zip files to safetensors..."
-    cd $LORAS_DIR
+    cd "$LORAS_DIR"
     for file in *.zip; do
         [ -f "$file" ] && mv "$file" "${file%.zip}.safetensors"
     done
 
-    echo "✅ All CivitAI downloads completed!"
+    if [ ${#failed_downloads[@]} -gt 0 ]; then
+        echo "⚠️  Some LoRA downloads failed: ${failed_downloads[*]}"
+        send_ntfy "⚠️ LoRA Downloads" "Completed with ${#failed_downloads[@]} failure(s): ${failed_downloads[*]}" "high"
+    else
+        echo "✅ All CivitAI downloads completed!"
+        send_ntfy "✅ LoRA Downloads Complete" "All $download_count LoRA(s) downloaded successfully"
+    fi
 fi
 
 # ============================================================
