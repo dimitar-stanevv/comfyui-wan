@@ -103,6 +103,8 @@ rm -rf CivitAI_Downloader
 # Bump these intentionally when you want to upgrade.
 WAN_COMMIT="0d78230"
 KJNODES_COMMIT="6ec4d67"
+RGTHREE_COMMIT="738105a"
+VRGAMEDEVGIRL_COMMIT="562abb4"
 
 # ComfyUI-WanVideoWrapper (core Wan support)
 if [ ! -d "$NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper" ]; then
@@ -122,6 +124,24 @@ cd $NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-KJNodes
 git fetch
 git reset --hard "$KJNODES_COMMIT"
 
+# rgthree-comfy (for Seed (rgthree) node used in NSFW Remix workflow)
+if [ ! -d "$NETWORK_VOLUME/ComfyUI/custom_nodes/rgthree-comfy" ]; then
+    cd $NETWORK_VOLUME/ComfyUI/custom_nodes
+    git clone https://github.com/rgthree/rgthree-comfy.git
+fi
+cd $NETWORK_VOLUME/ComfyUI/custom_nodes/rgthree-comfy
+git fetch
+git reset --hard "$RGTHREE_COMMIT"
+
+# comfyui-vrgamedevgirl (for FastUnsharpSharpen node used in NSFW Remix workflow)
+if [ ! -d "$NETWORK_VOLUME/ComfyUI/custom_nodes/comfyui-vrgamedevgirl" ]; then
+    cd $NETWORK_VOLUME/ComfyUI/custom_nodes
+    git clone https://github.com/vrgamegirl19/comfyui-vrgamedevgirl.git
+fi
+cd $NETWORK_VOLUME/ComfyUI/custom_nodes/comfyui-vrgamedevgirl
+git fetch
+git reset --hard "$VRGAMEDEVGIRL_COMMIT"
+
 # Install dependencies in background
 echo "🔧 Installing KJNodes packages..."
 pip install --no-cache-dir -r $NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-KJNodes/requirements.txt &
@@ -130,6 +150,14 @@ KJ_PID=$!
 echo "🔧 Installing WanVideoWrapper packages..."
 pip install --no-cache-dir -r $NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper/requirements.txt &
 WAN_PID=$!
+
+echo "🔧 Installing rgthree-comfy packages..."
+pip install --no-cache-dir -r $NETWORK_VOLUME/ComfyUI/custom_nodes/rgthree-comfy/requirements.txt &
+RGTHREE_PID=$!
+
+echo "🔧 Installing vrgamedevgirl packages..."
+pip install --no-cache-dir -r $NETWORK_VOLUME/ComfyUI/custom_nodes/comfyui-vrgamedevgirl/requirements.txt &
+VRGAMEDEVGIRL_PID=$!
 
 # ============================================================
 # Model Downloads (only what's needed for Wan 2.2 I2V workflow)
@@ -188,14 +216,14 @@ download_model() {
     echo "Download started in background for $destination_file"
 }
 
-# Download Wan 2.2 I2V models (high noise + low noise)
-echo "📥 Downloading Wan 2.2 I2V diffusion models..."
-download_model "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors" "$DIFFUSION_MODELS_DIR/wan2.2_i2v_high_noise_14B_fp16.safetensors" "Wan 2.2 High Noise (28GB)"
-download_model "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors" "$DIFFUSION_MODELS_DIR/wan2.2_i2v_low_noise_14B_fp16.safetensors" "Wan 2.2 Low Noise (28GB)"
+# Download Wan 2.2 Remix NSFW I2V models (high noise + low noise)
+echo "📥 Downloading Wan 2.2 Remix NSFW I2V models..."
+download_model "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v3.0.safetensors" "$DIFFUSION_MODELS_DIR/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v3.0.safetensors" "Wan2.2 Remix High Noise (14B fp8)"
+download_model "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v3.0.safetensors" "$DIFFUSION_MODELS_DIR/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v3.0.safetensors" "Wan2.2 Remix Low Noise (14B fp8)"
 
 # Download text encoder
 echo "📥 Downloading text encoder..."
-download_model "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "$TEXT_ENCODERS_DIR/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "Text Encoder (5GB)"
+download_model "https://huggingface.co/Osrivers/nsfw_wan_umt5-xxl_fp8_scaled.safetensors/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors" "$TEXT_ENCODERS_DIR/nsfw_wan_umt5-xxl_fp8_scaled.safetensors" "NSFW Text Encoder (5GB)"
 
 # Download VAE
 echo "📥 Downloading VAE..."
@@ -324,12 +352,12 @@ fi
 echo "📥 Downloading workflow..."
 mkdir -p "$WORKFLOW_DIR"
 
-WORKFLOW_FILE="$WORKFLOW_DIR/Wan2.2_I2V.json"
+WORKFLOW_FILE="$WORKFLOW_DIR/Wan2.2_I2V_NSFW_Remix.json"
 if [ ! -f "$WORKFLOW_FILE" ]; then
-    curl -L -o "$WORKFLOW_FILE" "https://raw.githubusercontent.com/dimitar-stanevv/comfyui-wan/master/workflows/Wan%202.2/Video%20Generation/Wan2.2_I2V.json"
-    echo "✅ Workflow downloaded: Wan2.2_I2V.json"
+    curl -L -o "$WORKFLOW_FILE" "https://raw.githubusercontent.com/dimitar-stanevv/comfyui-wan/master/workflows/Wan%202.2/Video%20Generation/Wan2.2_I2V_NSFW_Remix.json"
+    echo "✅ Workflow downloaded: Wan2.2_I2V_NSFW_Remix.json"
 else
-    echo "✅ Workflow already exists: Wan2.2_I2V.json"
+    echo "✅ Workflow already exists: Wan2.2_I2V_NSFW_Remix.json"
 fi
 
 # ============================================================
@@ -385,6 +413,12 @@ KJ_STATUS=$?
 wait $WAN_PID
 WAN_STATUS=$?
 
+wait $RGTHREE_PID
+RGTHREE_STATUS=$?
+
+wait $VRGAMEDEVGIRL_PID
+VRGAMEDEVGIRL_STATUS=$?
+
 if [ $KJ_STATUS -eq 0 ]; then
     echo "✅ KJNodes install complete"
 else
@@ -395,6 +429,18 @@ if [ $WAN_STATUS -eq 0 ]; then
     echo "✅ WanVideoWrapper install complete"
 else
     echo "❌ WanVideoWrapper install failed"
+fi
+
+if [ $RGTHREE_STATUS -eq 0 ]; then
+    echo "✅ rgthree-comfy install complete"
+else
+    echo "❌ rgthree-comfy install failed"
+fi
+
+if [ $VRGAMEDEVGIRL_STATUS -eq 0 ]; then
+    echo "✅ vrgamedevgirl install complete"
+else
+    echo "❌ vrgamedevgirl install failed"
 fi
 
 # Workspace as main working directory
