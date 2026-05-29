@@ -99,23 +99,28 @@ rm -rf CivitAI_Downloader
 # Custom Nodes Setup (only what's needed for Wan 2.2 I2V workflow)
 # ============================================================
 
+# Custom node version pins — last known-good as of 2026-04-21.
+# Bump these intentionally when you want to upgrade.
+WAN_COMMIT="0d78230"
+KJNODES_COMMIT="6ec4d67"
+
 # ComfyUI-WanVideoWrapper (core Wan support)
 if [ ! -d "$NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper" ]; then
     cd $NETWORK_VOLUME/ComfyUI/custom_nodes
     git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git
-else
-    echo "Updating WanVideoWrapper"
-    cd $NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper
-    git pull
 fi
+cd $NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-WanVideoWrapper
+git fetch
+git reset --hard "$WAN_COMMIT"
 
-# ComfyUI-KJNodes (for PathchSageAttentionKJ, ModelPassThrough)
+# ComfyUI-KJNodes (for PathchSageAttentionKJ, ModelPassThrough, GetNode, SetNode)
 if [ ! -d "$NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-KJNodes" ]; then
     cd $NETWORK_VOLUME/ComfyUI/custom_nodes
     git clone https://github.com/kijai/ComfyUI-KJNodes.git
 fi
 cd $NETWORK_VOLUME/ComfyUI/custom_nodes/ComfyUI-KJNodes
-git pull
+git fetch
+git reset --hard "$KJNODES_COMMIT"
 
 # Install dependencies in background
 echo "🔧 Installing KJNodes packages..."
