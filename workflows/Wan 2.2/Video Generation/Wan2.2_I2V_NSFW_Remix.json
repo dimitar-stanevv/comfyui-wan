@@ -1,8 +1,8 @@
 {
   "id": "2f0ba6fa-93b6-4799-9aaf-940a7eb0324e",
   "revision": 0,
-  "last_node_id": 108,
-  "last_link_id": 225,
+  "last_node_id": 112,
+  "last_link_id": 229,
   "nodes": [
     {
       "id": 97,
@@ -380,7 +380,7 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 221
+          "link": 227
         }
       ],
       "outputs": [
@@ -425,7 +425,7 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": 220
+          "link": 229
         }
       ],
       "outputs": [
@@ -991,6 +991,178 @@
         "",
         ""
       ]
+    },
+    {
+      "id": 109,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        40,
+        720
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 221
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            226
+          ]
+        }
+      ],
+      "title": "LoRA 1 (High)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.60",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "",
+        1.0
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 110,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        330,
+        720
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 226
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            227
+          ]
+        }
+      ],
+      "title": "LoRA 2 (High)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.60",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "",
+        1.0
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 111,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        40,
+        830
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 220
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            228
+          ]
+        }
+      ],
+      "title": "LoRA 1 (Low)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.60",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "",
+        1.0
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 112,
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        330,
+        830
+      ],
+      "size": [
+        270,
+        82
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 228
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            229
+          ]
+        }
+      ],
+      "title": "LoRA 2 (Low)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.60",
+        "Node name for S&R": "LoraLoaderModelOnly"
+      },
+      "widgets_values": [
+        "",
+        1.0
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
     }
   ],
   "links": [
@@ -1166,7 +1338,7 @@
       220,
       103,
       0,
-      55,
+      111,
       0,
       "MODEL"
     ],
@@ -1174,7 +1346,7 @@
       221,
       77,
       0,
-      54,
+      109,
       0,
       "MODEL"
     ],
@@ -1201,6 +1373,38 @@
       107,
       2,
       "VAE"
+    ],
+    [
+      226,
+      109,
+      0,
+      110,
+      0,
+      "MODEL"
+    ],
+    [
+      227,
+      110,
+      0,
+      54,
+      0,
+      "MODEL"
+    ],
+    [
+      228,
+      111,
+      0,
+      112,
+      0,
+      "MODEL"
+    ],
+    [
+      229,
+      112,
+      0,
+      55,
+      0,
+      "MODEL"
     ]
   ],
   "groups": [
@@ -1225,6 +1429,19 @@
         100,
         460,
         580
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 9,
+      "title": "LoRAs - enable (Ctrl+B) + pick file in BOTH High & Low",
+      "bounding": [
+        20,
+        660,
+        590,
+        270
       ],
       "color": "#3f789e",
       "font_size": 24,
