@@ -218,8 +218,8 @@ download_model() {
 
 # Download Wan 2.2 Remix NSFW I2V models (high noise + low noise)
 echo "📥 Downloading Wan 2.2 Remix NSFW I2V models..."
-download_model "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v3.0.safetensors" "$DIFFUSION_MODELS_DIR/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v3.0.safetensors" "Wan2.2 Remix High Noise (14B fp8)"
-download_model "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v3.0.safetensors" "$DIFFUSION_MODELS_DIR/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v3.0.safetensors" "Wan2.2 Remix Low Noise (14B fp8)"
+download_model "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v2.1.safetensors" "$DIFFUSION_MODELS_DIR/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_fp8_e4m3fn_v2.1.safetensors" "Wan2.2 Remix High Noise (14B fp8)"
+download_model "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v2.1.safetensors" "$DIFFUSION_MODELS_DIR/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_fp8_e4m3fn_v2.1.safetensors" "Wan2.2 Remix Low Noise (14B fp8)"
 
 # Download text encoder
 echo "📥 Downloading text encoder..."
